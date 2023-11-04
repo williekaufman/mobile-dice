@@ -6,6 +6,10 @@
   gap: 1px;
   width: calc(min(80vw, 80vh));
   height: calc(min(80vw, 80vh));
+  min-width: 500px;
+  min-height: 500px;
+  max-width: 1800px;
+  max-height: 1800px;
 }
 
 .square {

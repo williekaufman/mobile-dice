@@ -1,6 +1,16 @@
-.centered-container {
+.vertical-container {
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.horizontal-container {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: row;
+    gap: 50px;
 }

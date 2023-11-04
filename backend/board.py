@@ -1,6 +1,9 @@
 from enum import Enum
 import random
 
+class Result(Enum):
+    WIN = 'win'
+    LOSE = 'lose'
 
 class Direction(Enum):
     UP = 'UP'
@@ -67,6 +70,11 @@ class Square(Enum):
         i, j = self.index()
         return 'white' if (i + j) % 2 == 0 else 'black'
 
+    def distance(self, other):
+        i1, j1 = self.index()
+        i2, j2 = other.index()
+        return abs(i1 - i2) + abs(j1 - j2)
+
     def direction(self, direction):
         if direction == Direction.UP:
             return self.offset(1, 0)
@@ -81,6 +89,12 @@ class Square(Enum):
 
     def adjacent_squares(self):
         return [x for x in (self.direction(direction) for direction in Direction) if x]
+    
+    def to_json(self):
+        return self.value
+    
+    def of_json(j):
+        return Square(j)
 
 
 class Contents():
@@ -132,9 +146,13 @@ class Unit():
         return Unit(UnitType.EMPTY, None)
     
     def take_damage(self, damage):
+        if self.type == UnitType.EMPTY:
+            return
         self.current_health = max(0, self.current_health - damage)
 
     def heal(self, amount):
+        if self.type == UnitType.EMPTY:
+            return
         self.current_health = min(self.max_health, self.current_health + amount)
 
 
@@ -154,12 +172,24 @@ class Board():
     def set(self, square, contents):
         self.board[square] = contents
 
+    def set_unit(self, square, unit):
+        self.set(square, Contents(unit, self.get(square).terrain))
+
     def player_location(self):
         for square, contents in self.board.items():
             if contents.unit.type == UnitType.PLAYER:
                 return square
 
-    def move(self, square, direction):
+    def player(self):
+        return self.board[self.player_location()].unit
+
+    def move(self, square, target):
+        if self.get(target).unit.type != UnitType.EMPTY:
+            return False
+        self.set_unit(target, self.get(square).unit)
+        self.set_unit(square, Unit.empty())
+
+    def move_direction(self, square, direction):
         if square.direction(direction) is None:
             return False
         else:
@@ -168,11 +198,11 @@ class Board():
             return True
 
     def threatened_squares(self):
-        ret = {}
+        ret = []
         for square in Square:
             if self.board[square].unit.type == UnitType.ENEMY:
-                ret[square.value] = [x.value for x in square.adjacent_squares()]
-        return ret
+                ret.extend(square.adjacent_squares())
+        return [square.value for square in set(ret)]
     
     def enemy_turn(self):
         for square, contents in self.board.items():
@@ -197,5 +227,16 @@ class Board():
     def to_frontend(self):
         return {
             'board': self.to_json(),
-            'threatened_squares': self.threatened_squares()
+            'threatenedSquares': self.threatened_squares()
         }
+
+    def check_game_over(self):
+        if self.player().current_health <= 0:
+            return Result.LOSE
+        enemy = False
+        for square in Square:
+            if self.get(square).unit.type == UnitType.ENEMY and self.get(square).unit.current_health > 0:
+                enemy = True
+        if not enemy:
+            return Result.WIN
+        return None

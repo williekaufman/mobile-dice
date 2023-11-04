@@ -2,7 +2,7 @@ from enum import Enum
 import random
 
 
-class Face(Enum):
+class Resource(Enum):
     MOVE = 'move'
     ATTACK = 'attack'
     MAGIC = 'magic'
@@ -11,8 +11,8 @@ class Face(Enum):
 
 class Die():
     def __init__(self):
-        self.faces = [Face.MOVE, Face.ATTACK,
-                      None, Face.MAGIC, Face.DEFEND, None]
+        self.faces = [Resource.MOVE, Resource.ATTACK,
+                      None, Resource.MAGIC, Resource.DEFEND, None]
         self.active = None
         self.live = True
         self.roll()
@@ -29,7 +29,7 @@ class Die():
         dice.active = json['active']
         dice.live = json['live']
         dice.faces = [
-            Face(face) if face is not None else None for face in json['faces']]
+            Resource(face) if face is not None else None for face in json['faces']]
         return dice
 
 
@@ -37,10 +37,24 @@ class Dice():
     def __init__(self, dice=None):
         self.dice = dice or [Die() for _ in range(5)]
 
-    def roll(self, locks):
+    def roll(self, locks=[]):
         for i, die in enumerate(self.dice):
             if i not in locks:
                 die.roll()
+
+    def reset(self):
+        for die in self.dice:
+            die.live = True
+
+    def resources(self):
+        return [die.faces[die.active] for die in self.dice if die.live]
+
+    def pay(self, resource):
+        for die in self.dice:
+            if die.faces[die.active] == resource and die.live:
+                die.live = False
+                return
+        raise Exception(f"No die with resource {resource}") 
 
     def to_json(self):
         return [die.to_json() for die in self.dice]

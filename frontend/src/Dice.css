@@ -4,16 +4,19 @@
     gap: 1px;
 }
 
+.die.dead {
+    opacity: 0.5;
+}
+
 .dice {
     display: grid;
-    margin-top: 1vh;
     grid-template-columns: repeat(5, 1fr);
     gap: 15px;
 }
 
 .face {
-    height: calc(min(80vw, 80vh) / 18);
-    width: calc(min(80vw, 80vh) / 18);
+    height: calc(min(40vw, 80vh) / 18);
+    width: calc(min(40vw, 80vh) / 18);
     outline: 1px solid black;
     background-color: gray;
     box-sizing: border-box;

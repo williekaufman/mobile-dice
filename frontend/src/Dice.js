@@ -6,22 +6,24 @@ function backgroundImageUrl(face) {
     return `url("../images/${face}.jpg")`;
 }
 
-function Die({ faces, active }) {
+function Die({ faces, active , live }) {
     if (faces.length !== 6) {
         return null;
     }
 
+    let className = live ? "die" : "die dead";
+
     return (
-        <div className="die">
+        <div className={className}>
             {faces.map((face, index) => (
-                <div key={index} style={{ backgroundImage: backgroundImageUrl(face) }} className={active === index ? "face active" : "face"}>
+                <div key={index} style={{ backgroundImage: backgroundImageUrl(face) }} className={active === index && live ? "face active" : "face"}>
                 </div>
             ))}
         </div>
     );
 }
 
-function Lock({ index, locks, setLocks }) {
+function Lock({ index, live, locks, setLocks }) {
     function toggleLock() {
         console.log(locks);
         let newLocks = [...locks];
@@ -29,9 +31,15 @@ function Lock({ index, locks, setLocks }) {
         setLocks(newLocks);
     }
 
+    function styles() {
+        if (live) {
+            return { backgroundColor: locks[index] ? "red" : "blue" }
+        } return {}
+    }
+
     return (
         <div className="lock" style={{ marginBottom: '8px' }}>
-            <Button style={{ backgroundColor: locks[index] ? "red" : "blue" }} variant="contained" onClick={toggleLock}>
+            <Button style={styles()} variant={live ? "contained" : "outlined"} onClick={toggleLock} disabled={!live}>
                 {locks[index] ? "Unlock" : "Lock"}
             </Button>
         </div>
@@ -46,8 +54,8 @@ export default function Dice({ game, locks, setLocks }) {
         <div className="dice">
             {game.dice.map((die, index) => (
                 <div key={index} className="container">
-                    <Lock index={index} locks={locks} setLocks={setLocks} />
-                    <Die active={die.active} faces={die.faces} />
+                    <Lock index={index} live={die.live} locks={locks} setLocks={setLocks} />
+                    <Die live={die.live} active={die.active} faces={die.faces} />
                 </div>
             ))}
         </div>

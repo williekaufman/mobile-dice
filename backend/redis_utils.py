@@ -4,6 +4,17 @@ import json
 
 redis = r.Redis(connection_pool=r.ConnectionPool(host='localhost', port=6379))
 
+def recurse_to_json(obj):
+    if isinstance(obj, dict):
+        return {k: recurse_to_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [recurse_to_json(v) for v in obj]
+    elif hasattr(obj, 'to_json'):
+        return obj.to_json()
+    else:
+        return obj
+
+
 def rget(key: str, game_id: Optional[str] = None) -> Optional[str]:
     if game_id is not None:
         key = f"{key}:{game_id}"
