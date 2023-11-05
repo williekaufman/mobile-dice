@@ -20,7 +20,7 @@ class Board():
         for square in Square:
             self.board[square] = Contents(EmptyUnit(), random_terrain())
         self.set_unit(Square('A1'), Player(10, 10))
-        self.set_unit(Square('F6'), get_enemy('orc'))
+        self.set_unit(Square('F6'), get_enemy('goblin'))
 
     def get(self, square):
         return self.board[square]
@@ -46,18 +46,13 @@ class Board():
         self.player().roll_turn(state)
 
     def move(self, square, target):
-        if self.get(target).unit.type != UnitType.EMPTY:
+        if not target or self.get(target).unit.type != UnitType.EMPTY:
             return False
         self.set_unit(target, self.get(square).unit)
         self.set_unit(square, EmptyUnit())
 
     def move_direction(self, square, direction):
-        if square.direction(direction) is None:
-            return False
-        else:
-            self.board[square.direction(direction)] = self.board[square]
-            self.board[square] = None
-            return True
+        return self.move(square, square.direction(direction))
 
     def threatened_squares(self):
         ret = []
@@ -80,7 +75,6 @@ class Board():
         for contents in self.board.values():
             if contents.unit.type == UnitType.ENEMY:
                 contents.unit.resolve_turn(state)
-                return 
 
     def to_json(self):
         ret = {k.value: v.to_json() for k, v in self.board.items()}

@@ -3,7 +3,7 @@ from terrain import Terrain
 from unit import UnitType, EmptyUnit
 from dice import Dice, Resource
 from enum import Enum
-from moves import MoveSummary, damage_terrain, transform
+from moves import moves
 import random
 
 class Enemy():
@@ -25,6 +25,13 @@ class Enemy():
             'max_health': self.max_health,
             'move_index': self.move_index,
         }
+    
+    def describe(self):
+        return {
+            'name': self.name,
+            'max_health': self.max_health,
+            'moves': [move.name for move in self.moves],
+        }
 
     def of_json(j):
         enemy = get_enemy(j['name'])
@@ -38,10 +45,15 @@ class Enemy():
                 return square
 
     def describe_turn(self, state):
-        return self.moves[self.move_index].describe(state, self.location(state))
-    
+        move = self.moves[self.move_index]
+        description = move.describe(state, self.location(state), move.memory)
+        move.memory = description[1] if move.memory is None else move.memory
+        return description[0]
+
     def resolve_turn(self, state):
-        self.moves[self.move_index].resolve(state, self.location(state))
+        move = self.moves[self.move_index]
+        move.resolve(state, self.location(state), move.memory)
+        move.memory  = None
         self.transition(self)
 
     def take_damage(self, damage):
@@ -59,11 +71,23 @@ def next_move(enemy):
 def random_move(enemy):
     enemy.move_index = random.randint(0, len(enemy.moves) - 1)
 
+damage_terrain = moves['damage_terrain']
+transform = moves['transform']
+move = moves['move']
+random_move = moves['random_move']
+
 # You need to make a copy if you interact with this! So probably use get_enemy.
 enemies = {
     'orc': Enemy('orc', 5, 5, [damage_terrain(Terrain.PLAINS, 2), transform(Terrain.FOREST, Terrain.PLAINS)], next_move),
-    'goblin': Enemy('goblin', 3, 3, [damage_terrain(Terrain.PLAINS, 1), transform(Terrain.FOREST, Terrain.PLAINS)], random_move),
+    'goblin': Enemy('goblin', 3, 3, [move(Square('A1'))], random_move),
+    'skeleton': Enemy('skeleton', 2, 2, [random_move()], next_move),
 }
 
 def get_enemy(name):
-    return enemies[name].copy()
+    try:
+        return enemies[name].copy()
+    except KeyError:
+        return None
+    
+def all_enemies():
+    return [enemy.copy() for enemy in enemies.values()]

@@ -21,3 +21,5 @@ class EmptyUnit():
     def heal(self, n):
         pass
 
+    def gain_block(self, n):
+        pass

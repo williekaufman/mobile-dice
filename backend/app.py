@@ -10,6 +10,7 @@ from square import Square, Direction
 from dice import Dice
 from state import State
 from spells import spells
+from enemy import get_enemy, all_enemies
 import traceback
 from functools import wraps
 
@@ -110,6 +111,17 @@ def submit():
 def all_spells():
     game_id = request.args.get('gameId')
     return {'success': True, 'spells': [spell.to_frontend() for spell in spells.values()]}
+
+@app.route('/enemy', methods=['GET'])
+@api_endpoint
+def enemy_info():
+    enemy = request.args.get('enemy')
+    return {'success': True, 'enemy': get_enemy(enemy).describe()}
+
+@app.route('/enemy/all', methods=['GET'])
+@api_endpoint
+def all_enemies():
+    return {'success': True, 'enemies': [enemy.describe() for enemy in all_enemies()]}
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5005, debug=True)
