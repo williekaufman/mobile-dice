@@ -56,16 +56,16 @@ def resolve_move(state, location, destination):
 def move(destination):
     return Move(f"Move to {destination.value}", lambda state, location, memory: describe_move(destination), lambda state, location, memory: resolve_move(state, location, destination))
 
-def describe_random_move(state, location, memory):
+def describe_random_direction(state, location, memory):
     direction = memory or random.choice([direction for direction in Direction if location.direction(direction) is not None])
     square = location.direction(direction)
     return MoveSummary([square], f"Move to {square.value}"), direction
 
-def resolve_random_move(state, location, memory):
+def resolve_random_direction(state, location, memory):
     state.board.move_direction(location, memory)
 
-def random_move():
-    return Move("Move in a random direction", lambda state, location, memory: describe_random_move(state, location, memory), lambda state, location, memory: resolve_random_move(state, location, memory))
+def random_direction():
+    return Move("Move in a random direction", lambda state, location, memory: describe_random_direction(state, location, memory), lambda state, location, memory: resolve_random_direction(state, location, memory))
 
 def describe_heal(state, n):
     return MoveSummary([], f"Heal for {n}"), None
@@ -80,6 +80,6 @@ moves = {
     'damage_terrain': damage_terrain,
     'transform': transform,
     'move': move,
-    'random_move': random_move,
+    'random_direction': random_direction,
     'heal': heal,
 }
