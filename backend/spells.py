@@ -1,7 +1,7 @@
 from square import Square
 from terrain import Terrain
 from dice import Resource
-
+from unit import UnitType, EmptyUnit
 
 class Cost():
     def __init__(self, cost):
@@ -79,15 +79,18 @@ def fireball(state, target, dry_run=False):
         return False
     if dry_run:
         return True
-    for square in target.adjacent_squares():
-        state.board.get(square).unit.take_damage(2)
-    not dry_run and state.board.get(target).unit.take_damage(2)
+    damage = 2 + board.player().spell_damage()
+    for square in target.adjacent_squares() + [target]:
+        contents = state.board.get(square)
+        if contents.terrain == Terrain.FOREST:
+            board.set_terrain(square, Terrain.BURNT_FOREST)
+        contents.unit.take_damage(damage)
     return True
 
 
 def walk(state, target, dry_run=False):
     board = state.board
-    if board.player_location().distance(target) != 1:
+    if target not in board.player_location().adjacent_squares() or not board.get(target).unit.empty():
         return False
     if dry_run:
         return True
@@ -109,7 +112,8 @@ def strike(state, target, dry_run=False):
     board = state.board
     if board.player_location().distance(target) != 1:
         return False
-    board.get(target).unit.take_damage(3)
+    damage = 3 + board.player().strength()
+    board.get(target).unit.take_damage(3 + board.player().strength())
     return True
 
 heal_spell = Spell(

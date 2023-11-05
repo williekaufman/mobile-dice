@@ -3,6 +3,7 @@ import random
 
 class Terrain(Enum):
     FOREST = 'forest'
+    BURNT_FOREST = 'burnt_forest'
     PLAINS = 'plains'
     PENTAGRAM = 'pentagram'
     WHITE = 'white'

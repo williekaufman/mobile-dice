@@ -16,6 +16,9 @@ class Enemy():
         self.move_index = move_index
         self.transition = transition
 
+    def empty(self):
+        return False
+
     def to_json(self):
         # Intentionally omitting moves
         return {

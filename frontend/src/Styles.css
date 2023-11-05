@@ -14,3 +14,17 @@
     flex-direction: row;
     gap: 50px;
 }
+
+.player-info-container {
+    background-color: darkblue;
+    color: white;
+    width: 100%;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    flex-direction: row;
+    text-align: center;
+    text-wrap: nowrap;
+    padding: 10px;
+    align-items: center;
+}

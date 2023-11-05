@@ -29,7 +29,7 @@ function display(health) {
   return health || health === 0;
 }
 
-function HealthBar({ current, max, block }) {
+export function HealthBar({ current, max, block }) {
   if (!display(current) || !display(max)) {
     return null;
   }
@@ -74,7 +74,7 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
 
   return (
     <div id={name} className={className} style={{ backgroundImage: backgroundImageUrl(data.unit.type, data.terrain, isThreatened)}} onClick={onClick}>
-      {data.unit && <HealthBar current={data.unit.current_health} max={data.unit.max_health} block={data.unit.block} />}
+      {data.unit && <HealthBar current={data.unit.current_health} max={data.unit.max_health} block={data.unit.temporary?.block} />}
     </div>
   )
 }

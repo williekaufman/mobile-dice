@@ -63,7 +63,7 @@ class Board():
 
     def terrain_turn(self):
         for square, contents in self.board.items():
-            if contents.terrain == Terrain.POISON:
+            if contents.terrain == Terrain.POISON or contents.terrain == Terrain.BURNT_FOREST:
                 self.board[square].unit.take_damage(1)
 
     def describe_enemy_turn(self, state):
@@ -90,6 +90,7 @@ class Board():
         return {
             'board': self.to_json(),
             'enemyTurn': self.describe_enemy_turn(state).to_json(),
+            'player': self.player().to_json(),
         }
 
     def check_game_over(self):

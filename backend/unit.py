@@ -23,3 +23,6 @@ class EmptyUnit():
 
     def gain_block(self, n):
         pass
+
+    def empty(self):
+        return True
