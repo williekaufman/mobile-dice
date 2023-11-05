@@ -1,4 +1,4 @@
-from spells import spells, available_spells
+from spells import available_spells
 from redis_utils import rset_json, rset, recurse_to_json
 
 class State():

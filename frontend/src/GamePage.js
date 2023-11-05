@@ -10,7 +10,7 @@ import './Styles.css';
 import Button from '@mui/material/Button';
 
 function newGame() {
-    fetchWrapper("/new_game", {}, "POST")
+    fetchWrapper("/new_game", { numSpells: 4 }, "POST")
         .then((response) => response.json())
         .then((data) => {
             window.location.href = `/game/${data.gameId}`;
@@ -60,7 +60,7 @@ export default function GamePage() {
     }, [gameId]);
 
     useEffect(() => {
-        fetchWrapper("/spells", {}, "GET")
+        fetchWrapper("/spells", { gameId }, "GET")
             .then((response) => response.json())
             .then((data) => {
                 if (!data.success) {
@@ -107,27 +107,32 @@ export default function GamePage() {
     }
 
     return (
-        <div className="vertical-container">
-            <Result result={game.result} />
-            <div className="horizontal-container">
-                <div className="vertical-container" style={{ marginTop: '1vh' }}>
-                    <div className="horizontal-container">
-                        <Button style={{ color: 'white', backgroundColor: canRoll ? 'blue' : 'red' }} variant="contained" onClick={Roll} disabled={!canRoll} >
-                            Roll {game ? `(${game.rolls})` : null}
-                        </Button>
-                        <Button style={{ color: 'white', backgroundColor: 'blue', marginLeft: '1vw' }}
-                            variant="contained" onClick={SubmitTurn}>
-                            Submit Turn
-                        </Button>
-                    </div>
-                    <Dice game={game} locks={locks} setLocks={setLocks} />
-                    <PlayerInfo game={game} />
-                    <Intent game={game} />
-                    <Spells game={game} spells={spells} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} setHoveredSpell={setHoveredSpell} />
+        <div>
+            <div className="vertical-container">
+                <Result result={game.result} />
+                <div className="horizontal-container">
+                    <div className="vertical-container" style={{ marginTop: '1vh' }}>
+                        <div className="horizontal-container">
+                            <Button style={{ color: 'white', backgroundColor: canRoll ? 'blue' : 'red' }} variant="contained" onClick={Roll} disabled={!canRoll} >
+                                Roll {game ? `(${game.rolls})` : null}
+                            </Button>
+                            <Button style={{ color: 'white', backgroundColor: 'blue', marginLeft: '1vw' }}
+                                variant="contained" onClick={SubmitTurn}>
+                                Submit Turn
+                            </Button>
+                        </div>
+                        <Dice game={game} locks={locks} setLocks={setLocks} />
+                        <PlayerInfo game={game} />
+                        <Intent game={game} />
+                        <Spells game={game} spells={spells} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} setHoveredSpell={setHoveredSpell} />
 
+                    </div>
+                    <Board game={game} setGame={setGame} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} />
                 </div>
-                <Board game={game} setGame={setGame} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} />
             </div>
+            <Button variant="contained" onClick={newGame}>
+                New Game
+            </Button>
         </div>
     )
 }

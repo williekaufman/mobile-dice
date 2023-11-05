@@ -9,8 +9,9 @@ from board import Board
 from square import Square, Direction
 from dice import Dice
 from state import State
-from spells import spells
+from spells import spell_definitions
 from enemy import get_enemy, all_enemies
+import random
 import traceback
 from functools import wraps
 
@@ -38,9 +39,12 @@ def new_game_id():
 @app.route('/new_game', methods=['POST'])
 @api_endpoint
 def new_game():
+    num_spells = request.json.get('numSpells') or 6
     game_id = new_game_id()
     board = Board()
     dice = Dice()
+    spells = random.sample(list(spell_definitions.keys()), num_spells)
+    rset_json('spells', spells, game_id)
     rset_json('board', recurse_to_json(board.to_json()), game_id)
     rset_json('dice', dice.to_json(), game_id)
     rset('rolls', 3, game_id)
@@ -86,9 +90,9 @@ def cast():
     state = State(game_id, board, dice, rolls)
     if board.check_game_over() is not None:
         return {'success': False, 'error': 'Game is already over', **state.to_frontend()}
-    if spell not in spells:
-        return {'success': False, 'error': 'Invalid spell', **state.to_frontend()}
-    if not spells[spell].resolve(state, target):
+    if spell not in spell_definitions:
+        return {'success': False, 'error': 'Unknown spell', **state.to_frontend()}
+    if not spell_definitions[spell].resolve(state, target):
         return {'success': False, 'error': 'Failed to cast spell', **state.to_frontend()}
     state.write()
     return state.to_frontend()
@@ -110,7 +114,10 @@ def submit():
 @api_endpoint
 def all_spells():
     game_id = request.args.get('gameId')
-    return {'success': True, 'spells': [spell.to_frontend() for spell in spells.values()]}
+    if not game_id:
+        return {'success': False, 'error': 'No game id'}
+    spells = rget_json('spells', game_id)
+    return {'success': True, 'spells': [spell_definitions[spell].to_frontend() for spell in spells]}
 
 @app.route('/enemy', methods=['GET'])
 @api_endpoint

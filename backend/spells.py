@@ -1,7 +1,7 @@
 from square import Square
 from terrain import Terrain
 from dice import Resource
-from unit import UnitType, EmptyUnit
+from redis_utils import rget_json
 
 class Cost():
     def __init__(self, cost):
@@ -153,7 +153,7 @@ strike_spell = Spell(
     Cost([(Resource.ATTACK, 1)]),
     strike)
 
-spells = {
+spell_definitions = {
     'heal': heal_spell,
     'block': block_spell,
     'fireball': fireball_spell,
@@ -167,7 +167,9 @@ spells = {
 
 def available_spells(state):
     ret = {}
-    for spell in spells.values():
+    spells = rget_json('spells', state.id)
+    for spell in spells:
+        spell = spell_definitions[spell]
         if spell.cost.can_afford(state):
             squares = [square for square in Square if spell.effect(
                 state, square, dry_run=True)]
