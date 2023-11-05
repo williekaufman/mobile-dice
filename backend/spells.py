@@ -1,6 +1,6 @@
-from enum import Enum
-from board import Board, Square, Contents, Unit, UnitType, Terrain
-from dice import Dice, Resource
+from square import Square
+from terrain import Terrain
+from dice import Resource
 
 
 class Cost():
@@ -63,6 +63,15 @@ def heal(state, target, dry_run=False):
     board.player().heal(1)
     return True
 
+def block(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() != target:
+        return False
+    if dry_run:
+        return True
+    board.player().gain_block(2)
+    return True
+
 
 def fireball(state, target, dry_run=False):
     board = state.board
@@ -103,12 +112,18 @@ def strike(state, target, dry_run=False):
     board.get(target).unit.take_damage(3)
     return True
 
-
 heal_spell = Spell(
     'heal',
     'Restore one health',
     Cost([(Resource.MAGIC, 1)]),
     heal)
+
+block_spell = Spell(
+    'block',
+    'Gain two block',
+    Cost([(Resource.DEFEND, 1)]),
+    block
+)
 
 fireball_spell = Spell(
     'fireball',
@@ -136,6 +151,7 @@ strike_spell = Spell(
 
 spells = {
     'heal': heal_spell,
+    'block': block_spell,
     'fireball': fireball_spell,
     'walk': walk_spell,
     'teleport': teleport_spell,

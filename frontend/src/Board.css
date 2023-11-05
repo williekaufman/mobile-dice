@@ -14,7 +14,6 @@
 
 .square {
   display: flex;
-  align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
@@ -23,4 +22,64 @@
   color: white;
   outline: 2px solid black;
   box-sizing: border-box;
+  position: relative;
+}
+
+.square::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10; 
+  width: 100%;
+  height: 100%;
+  pointer-events: none; 
+  box-shadow: inset 0 0 0 5px blue; 
+  opacity: 0; 
+  transition: opacity 0.3s ease-in-out;
+}
+
+.square.shadow-on::after {
+  opacity: 1; 
+}
+
+.health-bar-container {
+  width: 100%;
+  height: 15%;
+  background-color: #eee;
+  position: relative; 
+  overflow: hidden; 
+  color: black;
+}
+
+.health-bar-block {
+  position: absolute;
+  top: 0;
+  left: 5%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  background-color: lightgray;
+  padding: 0 5px;
+}
+
+.health-bar-fill {
+  background-color: #f00; 
+  height: 100%;
+  width: 0; 
+  transition: width 0.3s ease-in-out; 
+}
+
+.health-bar-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; 
+  font-weight: bold;
 }

@@ -11,10 +11,10 @@ export default function LandingPage() {
             }
         )
     } 
+
+    useEffect(() => {
+        newGame();
+    }, []);
     
-    return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Button variant="contained" onClick={newGame}>New Game</Button>
-        </div>
-        )
+    return null;
 }

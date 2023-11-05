@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import './Board.css';
 import { fetchWrapper, squares_in_order } from './Helpers';
 
-function backgroundImageUrl(unit, terrain) {
-  if (unit) {
-    return `url("../images/${unit}.jpg"), url("../images/${terrain}.jpg")`;
-  }
-  return `url("../images/${terrain}.jpg")`;
+function backgroundImageUrl(unit, terrain, threatened) {
+  unit = unit ? `url("../images/${unit}.jpg"),` : "";
+  terrain = `url("../images/${terrain}.jpg")`;
+  threatened = threatened ? `url("../images/target.jpg"),` : "";
+  return `${threatened}${unit}${terrain}`;
 }
 
 function threatened(square, threatenedSquares) {
@@ -25,17 +25,27 @@ function availableTarget(square, availableSpells, casting, hovered) {
   }
 }
 
-function Health({ current, max }) {
-  if (current == null || max == null) {
+function display(health) {
+  return health || health === 0;
+}
+
+function HealthBar({ current, max, block }) {
+  if (!display(current) || !display(max)) {
     return null;
   }
 
+  const healthPercentage = (current / max) * 100;
+
   return (
-    <div className="health" style={{ color: 'white' }}>
-      {current} / {max}
+    <div className="health-bar-container">
+      {!!block && <div className="health-bar-block">{block}</div>}
+      <div className="health-bar-fill" style={{ width: `${healthPercentage}%` }}></div>
+      <div className="health-bar-text">
+        {current} / {max}
+      </div>
     </div>
-  )
-}
+  );
+};
 
 function cast(gameId, spell, target, setGame, setCasting) {
   fetchWrapper("/cast", { gameId, spell, target }, "POST")
@@ -53,18 +63,18 @@ function cast(gameId, spell, target, setGame, setCasting) {
 function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCasting, availableSpells, hoveredSpell }) {
   let isThreatened = threatened(name, threatenedSquares);
   let isAvailableTarget = availableTarget(name, availableSpells, casting, hoveredSpell);
-  let boxShadow = isThreatened ? "0 0 0 5px red inset" : isAvailableTarget ? "0 0 0 5px blue inset" : "none";
+  let className = isAvailableTarget ? "square shadow-on" : "square";
 
   function onClick() {
-    if (!casting) {
+    if (!casting || !isAvailableTarget) {
       return;
     }
     cast(gameId, casting, name, setGame, setCasting);
   }
 
   return (
-    <div id={name} className="square" style={{ backgroundImage: backgroundImageUrl(data.unit.type, data.terrain), boxShadow }} onClick={onClick}>
-      {data.unit && <Health current={data.unit.current_health} max={data.unit.max_health} />}
+    <div id={name} className={className} style={{ backgroundImage: backgroundImageUrl(data.unit.type, data.terrain, isThreatened)}} onClick={onClick}>
+      {data.unit && <HealthBar current={data.unit.current_health} max={data.unit.max_health} block={data.unit.block} />}
     </div>
   )
 }
@@ -85,7 +95,7 @@ function Board({ game, setGame, casting, setCasting, hoveredSpell }) {
       {x.map((square) => (
         <div key={square}>
           {square &&
-            <Square gameId={gameId} name={square} setGame={setGame} data={board.board[square]} threatenedSquares={board.threatenedSquares} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} />
+            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={game.enemyTurn.squares} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} />
           }
         </div>
       ))}

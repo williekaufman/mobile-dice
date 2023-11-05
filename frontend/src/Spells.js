@@ -24,7 +24,7 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
     }
 
     const LargeButton = styled(Button)({
-        padding: '20px',
+        padding: '10px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -33,7 +33,7 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
     });
 
     return (
-        <div className="spell">
+        <div>
             <LargeButton
                 style={casting == spell.name ? { backgroundColor: 'red' } : {}}
                 variant="contained"

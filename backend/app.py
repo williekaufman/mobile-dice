@@ -5,7 +5,8 @@ from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_cors import CORS, cross_origin
 from secrets import compare_digest, token_hex
 from redis_utils import redis, rget_json, rset_json, rset, rget, recurse_to_json
-from board import Board, Square, Direction
+from board import Board
+from square import Square, Direction
 from dice import Dice
 from state import State
 from spells import spells

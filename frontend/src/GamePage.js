@@ -4,6 +4,7 @@ import { fetchWrapper } from './Helpers';
 import Board from './Board';
 import Dice from './Dice';
 import Spells from './Spells';
+import Intent from './Intent';
 import './Styles.css';
 import Button from '@mui/material/Button';
 
@@ -119,6 +120,7 @@ export default function GamePage() {
                         </Button>
                     </div>
                     <Dice game={game} locks={locks} setLocks={setLocks} />
+                    <Intent game={game} />
                     <Spells game={game} spells={spells} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} setHoveredSpell={setHoveredSpell} />
 
                 </div>
