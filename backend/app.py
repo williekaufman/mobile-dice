@@ -118,7 +118,7 @@ def submit():
 
 @app.route('/spells', methods=['GET'])
 @api_endpoint
-def all_spells():
+def game_spells():
     game_id = request.args.get('gameId')
     if not game_id:
         return failure({'error': 'No game id'})
@@ -126,6 +126,11 @@ def all_spells():
     num_spells = rget_json('num_spells', game_id)
     spells = n_spells(num_spells, seed)
     return success({'spells': [spell_definitions[spell].to_frontend() for spell in spells]})
+
+@app.route('/all_spells', methods=['GET'])
+@api_endpoint
+def all_spells():
+    return success({'spells': [spell_definitions[spell].to_frontend() for spell in spell_definitions.keys()]})
 
 @app.route('/enemy', methods=['GET'])
 @api_endpoint

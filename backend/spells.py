@@ -41,6 +41,9 @@ class Limit():
             return times_cast['total'] < self.limit
         if self.type == LimitType.PER_TURN:
             return times_cast['turn'] < self.limit
+    
+    def to_json(self):
+        return {'type': self.type.value, 'limit': self.limit}
 
 class Spell():
     def __init__(self, name, description, cost, effect, limits=[]):
@@ -68,7 +71,8 @@ class Spell():
         return True
 
     def to_frontend(self):
-        return {'name': self.name, 'description': self.description, 'cost': self.cost.to_json()}
+        limits = {'limits': [limit.to_json() for limit in self.limits]} if self.limits else {}
+        return {'name': self.name, 'description': self.description, 'cost': self.cost.to_json(), **limits}
 
     def to_json(self):
         return self.name
@@ -225,12 +229,11 @@ dexterity_spell = Spell(
 
 overheat_spell = Spell(
     'overheat',
-    'Take 1 damage, gain 3 spell damage and 3 strength. Only castable once per game.',
+    'Take 1 damage, gain 3 spell damage and 3 strength. Castable once per game.',
     Cost([(Resource.MAGIC, 1)]),
     overheat,
     [Limit(LimitType.PER_GAME, 1)]
 )
-
 
 spell_definitions = {
     'heal': heal_spell,

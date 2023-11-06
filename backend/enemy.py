@@ -46,6 +46,7 @@ class Enemy():
         for square, contents in state.board.board.items():
             if contents.unit == self:
                 return square
+        return None
 
     def describe_turn(self, state):
         return self.moves[self.move_index].describe(state, self.location(state))
@@ -84,6 +85,7 @@ enemies = {
     'goblin': Enemy('goblin', 3, 3, [move(Square('A1'))], random_move),
     'skeleton': Enemy('skeleton', 2, 2, [random_direction()], next_move),
     'rook man': Enemy('rook man', 7, 7, [cross_attack(), move_then_cross_attack()], next_move),
+    'trap room': Enemy('trap room', 1, 1, [damage_terrain(Terrain.PLAINS, 1)], next_move),
 }
 
 def get_enemy(name):

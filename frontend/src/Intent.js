@@ -10,9 +10,9 @@ export default function Intent({ game }) {
     return (
         <div className="intent">
             <h1>Intents</h1>
-            {game.enemyTurn.map((intent, index) => (
+            {Object.keys(game.enemyTurn).map((name, index) => (
                 <div key={index} style={{color: color(index)}}>
-                    <h2>{intent.description}</h2>
+                    <h2>{name}: {game.enemyTurn[name].description}</h2>
                 </div>
             ))}
         </div>

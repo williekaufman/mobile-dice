@@ -17,7 +17,7 @@ export function color(index) {
 }
 
 function newGame() {
-    fetchWrapper("/new_game", { numSpells: 4 }, "POST")
+    fetchWrapper("/new_game", { numSpells: 6 }, "POST")
         .then((response) => response.json())
         .then((data) => {
             window.location.href = `/game/${data.gameId}`;

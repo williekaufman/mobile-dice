@@ -15,13 +15,14 @@ class Result(Enum):
 class Board():
     def __init__(self, initialize_board=True):
         self.board = {}
+        self.non_board_enemies = []
         if not initialize_board:
             return
         for square in Square:
             self.board[square] = Contents(EmptyUnit(), random_terrain())
         self.set_unit(Square('A1'), Player(10, 10))
         self.set_unit(Square('F1'), get_enemy('rook man'))
-
+        self.non_board_enemies = [get_enemy('trap room')]
 
     def get(self, square):
         return self.board[square]
@@ -47,7 +48,7 @@ class Board():
         self.player().roll_turn(state)
 
     def enemies(self):
-        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY]
+        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY] + self.non_board_enemies
 
     def move(self, square, target):
         if not target or self.get(target).unit.type != UnitType.EMPTY:
@@ -64,7 +65,7 @@ class Board():
                 self.board[square].unit.take_damage(1)
 
     def describe_enemy_turn(self, state):
-        return [enemy.describe_turn(state) for enemy in self.enemies()]
+        return {enemy.name: enemy.describe_turn(state).to_json() for enemy in self.enemies()}
 
     def enemy_turn(self, state):
         for contents in self.board.values():
@@ -72,19 +73,19 @@ class Board():
                 contents.unit.resolve_turn(state)
 
     def to_json(self):
-        ret = {k.value: v.to_json() for k, v in self.board.items()}
-        return ret
+        return {'board': {k.value: v.to_json() for k, v in self.board.items()}, 'non_board_enemies': [enemy.to_json() for enemy in self.non_board_enemies]}
 
     def of_json(j):
         b = Board(False)
         b.board = {Square(k): Contents(
-            unit_of_json(v['unit']), Terrain(v['terrain'])) for k, v in j.items()}
+            unit_of_json(v['unit']), Terrain(v['terrain'])) for k, v in j['board'].items()}
+        b.non_board_enemies = [unit_of_json(enemy) for enemy in j['non_board_enemies']]
         return b
 
     def to_frontend(self, state):
         return {
             'board': self.to_json(),
-            'enemyTurn': [enemy_turn.to_json() for enemy_turn in self.describe_enemy_turn(state)],
+            'enemyTurn': self.describe_enemy_turn(state),
             'player': self.player().to_json(),
         }
 
