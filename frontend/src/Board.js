@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import './Board.css';
 import { fetchWrapper, squares_in_order } from './Helpers';
+import { color } from './GamePage';
 
 function backgroundImageUrl(unit, terrain, threatened) {
+  if (unit == "enemy") {
+    unit = `enemy-${color(0)}`;
+  }
   unit = unit ? `url("../images/${unit}.jpg"),` : "";
   terrain = `url("../images/${terrain}.jpg")`;
-  threatened = threatened ? `url("../images/target.jpg"),` : "";
+  threatened = threatened || threatened === 0 ? `url("../images/target-${color(threatened)}.jpg"),` : "";
   return `${threatened}${unit}${terrain}`;
 }
 
 function threatened(square, threatenedSquares) {
-  return (threatenedSquares || []).includes(square);
+  for (let i = 0; i < threatenedSquares.length; i++) {
+    if (threatenedSquares[i].includes(square)) {
+      return i;
+    }
+  }
+  return false;
 }
 
 function availableTarget(square, availableSpells, casting, hovered) {
@@ -95,7 +104,7 @@ function Board({ game, setGame, casting, setCasting, hoveredSpell }) {
       {x.map((square) => (
         <div key={square}>
           {square &&
-            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={game.enemyTurn.squares} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} />
+            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={game.enemyTurn.map((turn) => turn.squares)} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} />
           }
         </div>
       ))}

@@ -21,6 +21,8 @@ class Board():
             self.board[square] = Contents(EmptyUnit(), random_terrain())
         self.set_unit(Square('A1'), Player(10, 10))
         self.set_unit(Square('F6'), get_enemy('goblin'))
+        self.set_unit(Square('F1'), get_enemy('orc'))
+
 
     def get(self, square):
         return self.board[square]
@@ -45,6 +47,9 @@ class Board():
     def player_turn(self, state):
         self.player().roll_turn(state)
 
+    def enemies(self):
+        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY]
+
     def move(self, square, target):
         if not target or self.get(target).unit.type != UnitType.EMPTY:
             return False
@@ -54,22 +59,13 @@ class Board():
     def move_direction(self, square, direction):
         return self.move(square, square.direction(direction))
 
-    def threatened_squares(self):
-        ret = []
-        for square in Square:
-            if self.board[square].unit.type == UnitType.ENEMY:
-                ret.extend(square.adjacent_squares())
-        return [square.value for square in set(ret)]
-
     def terrain_turn(self):
         for square, contents in self.board.items():
             if contents.terrain == Terrain.POISON or contents.terrain == Terrain.BURNT_FOREST:
                 self.board[square].unit.take_damage(1)
 
     def describe_enemy_turn(self, state):
-        for contents in self.board.values():
-            if contents.unit.type == UnitType.ENEMY:
-                return contents.unit.describe_turn(state)
+        return [enemy.describe_turn(state) for enemy in self.enemies()]
 
     def enemy_turn(self, state):
         for contents in self.board.values():
@@ -89,7 +85,7 @@ class Board():
     def to_frontend(self, state):
         return {
             'board': self.to_json(),
-            'enemyTurn': self.describe_enemy_turn(state).to_json(),
+            'enemyTurn': [enemy_turn.to_json() for enemy_turn in self.describe_enemy_turn(state)],
             'player': self.player().to_json(),
         }
 

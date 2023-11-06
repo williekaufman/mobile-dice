@@ -10,5 +10,8 @@ class Terrain(Enum):
     BLACK = 'black'
     POISON = 'poison'
 
+    def starting_terrain(self):
+        return self != Terrain.BURNT_FOREST
+
 def random_terrain():
-    return random.choice([terrain for terrain in Terrain])
+    return random.choice([terrain for terrain in Terrain if terrain.starting_terrain()])

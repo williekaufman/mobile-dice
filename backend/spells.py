@@ -56,7 +56,7 @@ class Spell():
 # Dry run is used for checking possible spells without modifying state
 def heal(state, target, dry_run=False):
     board = state.board
-    if board.player_location() != target:
+    if board.player_location() != target or board.player().current_health == board.player().max_health:
         return False
     if dry_run:
         return True
@@ -100,7 +100,7 @@ def walk(state, target, dry_run=False):
 
 def teleport(state, target, dry_run=False):
     board = state.board
-    if board.get(board.player_location()).terrain != Terrain.PENTAGRAM or board.get(target).terrain != Terrain.PENTAGRAM:
+    if not (board.get(board.player_location()).terrain == Terrain.PENTAGRAM == board.get(target).terrain):
         return False
     if dry_run:
         return True
@@ -112,7 +112,6 @@ def strike(state, target, dry_run=False):
     board = state.board
     if board.player_location().distance(target) != 1:
         return False
-    damage = 3 + board.player().strength()
     board.get(target).unit.take_damage(3 + board.player().strength())
     return True
 

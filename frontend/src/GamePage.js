@@ -9,6 +9,12 @@ import PlayerInfo from './PlayerInfo';
 import './Styles.css';
 import Button from '@mui/material/Button';
 
+let colors = ["red", "blue", "purple"];
+
+export function color(index) {
+    return colors[index];
+}
+
 function newGame() {
     fetchWrapper("/new_game", { numSpells: 4 }, "POST")
         .then((response) => response.json())
@@ -28,9 +34,6 @@ function Result({ result }) {
     return (
         <div className="result">
             <h1 style={{ color: color }}>You {result}</h1>
-            <Button variant="contained" onClick={newGame}>
-                New Game
-            </Button>
         </div>
     )
 }
