@@ -6,12 +6,6 @@ from player import Player
 from terrain import Terrain, random_terrain
 from helpers import unit_of_json
 
-
-class Result(Enum):
-    WIN = 'win'
-    LOSE = 'lose'
-
-
 class Board():
     def __init__(self, initialize_board=True):
         self.board = {}
@@ -36,6 +30,11 @@ class Board():
     def set_terrain(self, square, terrain):
         self.board[square].terrain = terrain
 
+    def cleanup_dead_enemies(self):
+        for square, contents in self.board.items():
+            if contents.unit.type == UnitType.ENEMY and contents.unit.current_health <= 0:
+                self.set_unit(square, EmptyUnit())
+
     def player_location(self):
         for square, contents in self.board.items():
             if contents.unit.type == UnitType.PLAYER:
@@ -47,8 +46,8 @@ class Board():
     def player_turn(self, state):
         self.player().roll_turn(state)
 
-    def enemies(self):
-        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY] + self.non_board_enemies
+    def enemies(self, include_non_board_enemies=True):
+        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY] + (self.non_board_enemies if include_non_board_enemies else [])
 
     def move(self, square, target):
         if not target or self.get(target).unit.type != UnitType.EMPTY:
@@ -68,9 +67,8 @@ class Board():
         return {enemy.name: enemy.describe_turn(state).to_json() for enemy in self.enemies()}
 
     def enemy_turn(self, state):
-        for contents in self.board.values():
-            if contents.unit.type == UnitType.ENEMY:
-                contents.unit.resolve_turn(state)
+        for enemy in self.enemies():
+            enemy.resolve_turn(state)
 
     def to_json(self):
         return {'board': {k.value: v.to_json() for k, v in self.board.items()}, 'non_board_enemies': [enemy.to_json() for enemy in self.non_board_enemies]}
@@ -88,14 +86,3 @@ class Board():
             'enemyTurn': self.describe_enemy_turn(state),
             'player': self.player().to_json(),
         }
-
-    def check_game_over(self):
-        if self.player().current_health <= 0:
-            return Result.LOSE
-        enemy = False
-        for square in Square:
-            if self.get(square).unit.type == UnitType.ENEMY and self.get(square).unit.current_health > 0:
-                enemy = True
-        if not enemy:
-            return Result.WIN
-        return None

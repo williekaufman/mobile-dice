@@ -76,10 +76,9 @@ def roll():
     state = State.of_game_id(game_id)
     if state.rolls <= 0:
         return failure({'error': 'No rolls left', **state.to_frontend()})
-    if state.board.check_game_over() is not None:
+    if state.check_game_over() is not None:
         return failure({'error': 'Game is already over', **state.to_frontend()})
     state.rolls -= 1
-    print([die.active for die in state.dice.dice])
     state.dice.roll(locks)
     state.write()
     return success(state.to_frontend())
@@ -94,7 +93,7 @@ def cast():
     spell = request.json.get('spell')
     target = Square(request.json.get('target'))
     state = State.of_game_id(game_id)
-    if state.board.check_game_over() is not None:
+    if state.check_game_over() is not None:
         return failure({'error': 'Game is already over', **state.to_frontend()})
     if spell not in spell_definitions:
         return failure({'error': 'Unknown spell', **state.to_frontend()})
@@ -110,7 +109,7 @@ def cast():
 def submit():
     game_id = request.json.get('gameId')
     state = State.of_game_id(game_id)
-    if state.board.check_game_over() is not None:
+    if state.check_game_over() is not None:
         return failure({'error': 'Game is already over', **state.to_frontend()})
     state.roll_turn()
     state.write()

@@ -63,11 +63,11 @@ class Spell():
         return all(limit.can_cast(self.times_cast(state)) for limit in self.limits) and self.cost.can_afford(state)
 
     def resolve(self, state, target):
-        if not self.can_cast(state):
-            return False
-        if not self.effect(state, target):
+        # check if we can resolve it, then pay costs, then actually resolve it. A little inefficient but way more intuitive
+        if not (self.can_cast(state) and self.effect(state, target, dry_run=True)):
             return False
         self.cost.pay(state)
+        self.effect(state, target)
         return True
 
     def to_frontend(self):
@@ -174,6 +174,16 @@ def overheat(state, target, dry_run=False):
     board.player().gain_strength(3)
     return True
 
+def innervate(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() != target:
+        return False
+    if dry_run:
+        return True
+    for die in state.dice.dice:
+        die.live = True
+    return True
+
 heal_spell = Spell(
     'heal',
     'Restore one health',
@@ -235,6 +245,14 @@ overheat_spell = Spell(
     [Limit(LimitType.PER_GAME, 1)]
 )
 
+innervate_spell = Spell(
+    'innervate',
+    'Refresh all dice. Castable once per game.',
+    Cost([(Resource.MAGIC, 1)]),
+    innervate,
+    [Limit(LimitType.PER_GAME, 1)]
+)
+
 spell_definitions = {
     'heal': heal_spell,
     'block': block_spell,
@@ -245,6 +263,7 @@ spell_definitions = {
     'strength': strength_spell,
     'dexterity': dexterity_spell,
     'overheat': overheat_spell,
+    'innervate': innervate_spell
 }
 
 # Not super efficient to check all the squares even when it's obviously invalid, but it's not a big deal (yet)

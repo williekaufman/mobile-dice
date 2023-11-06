@@ -99,6 +99,7 @@ export default function GamePage() {
                     return;
                 }
                 setGame(data);
+                setCasting(null);
             });
     }
 
@@ -112,6 +113,7 @@ export default function GamePage() {
                 }
                 setLocks([false, false, false, false, false]);
                 setGame(data);
+                setCasting(null);
                 getSpells();
             });
     }

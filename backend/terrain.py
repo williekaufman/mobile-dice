@@ -6,7 +6,6 @@ class Terrain(Enum):
     BURNT_FOREST = 'burnt_forest'
     PLAINS = 'plains'
     PENTAGRAM = 'pentagram'
-    WHITE = 'white'
     BLACK = 'black'
     POISON = 'poison'
 

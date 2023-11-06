@@ -32,6 +32,8 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
         width: '30vw',
     });
 
+    spell.cost = spell.cost.length === 0 ? [{"amount": null, "resource": "Free"}] : spell.cost;
+
     return (
         <div>
             <LargeButton

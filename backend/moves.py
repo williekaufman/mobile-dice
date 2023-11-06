@@ -27,6 +27,15 @@ class Move():
     def compose(move1, move2):
         return Move(f"{move1.name} then {move2.name[0].lower() + move2.name[1:]}", lambda state, location: MoveSummary.compose(move1.describe(state, location), move2.describe(state, location)), lambda state, location: (move1.resolve(state, location), move2.resolve(state, location)))
 
+def describe_pass_turn():
+    return MoveSummary([], "Do nothing")
+
+def resolve_pass_turn(state, location):
+    pass
+
+def pass_turn():
+    return Move("Do nothing", lambda state, location: describe_pass_turn(), lambda state, location: resolve_pass_turn(state, location))
+
 def describe_damage_terrain(state, terrain, n):
     squares = [square for square in Square if state.board.get(square).terrain == terrain]
     return MoveSummary(squares, f"Deal {n} damage to all characters on {terrain.value}")
@@ -38,6 +47,16 @@ def resolve_damage_terrain(state, terrain, n):
 
 def damage_terrain(terrain, n):
     return Move(f"Deal {n} damage to units on {terrain.value}", lambda state, location: describe_damage_terrain(state, terrain, n), lambda state, location: resolve_damage_terrain(state, terrain, n))
+
+def describe_damage_all(state, n):
+    return MoveSummary([], f"Deal {n} damage to all characters")
+
+def resolve_damage_all(state, n):
+    for square in Square:
+        state.board.get(square).unit.take_damage(n)
+
+def damage_all(n):
+    return Move(f"Deal {n} damage to all units", lambda state, location: describe_damage_all(state, n), lambda state, location: resolve_damage_all(state, n))
 
 def describe_transform(state, old_terrain, new_terrain):
     squares = [square for square in Square if state.board.get(square).terrain == old_terrain]
@@ -121,4 +140,6 @@ moves = {
     'heal': heal,
     'cross_attack': cross_attack,
     'move_then_cross_attack': move_then_cross_attack,
+    'damage_all': damage_all,
+    'pass_turn': pass_turn,
 }

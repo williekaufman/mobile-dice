@@ -1,7 +1,12 @@
 from spells import available_spells
 from redis_utils import rget, rget_json, rset_json, rset, recurse_to_json
-from board import Board
+from board import Board, Square
 from dice import Dice
+from enum import Enum
+
+class Result(Enum):
+    WIN = 'win'
+    LOSE = 'lose'
 
 class GameInfo():
     def __init__(self, id, turn):
@@ -39,6 +44,7 @@ class State():
 
     def add_spell_cast(self, spell):
         self.spells_cast.setdefault(self.game_info.turn, []).append(spell)
+        self.board.cleanup_dead_enemies()
 
     def roll_turn(self):
         self.rolls = 3
@@ -46,11 +52,22 @@ class State():
         self.board.enemy_turn(self)
         self.board.terrain_turn()
         self.board.player_turn(self)
+        self.board.cleanup_dead_enemies()
         self.dice.roll()
         self.game_info.turn += 1
 
+    def check_game_over(self):
+        board = self.board
+        if board.player().current_health <= 0:
+            return Result.LOSE
+        if [enemy for enemy in board.enemies(include_non_board_enemies=False) if enemy.current_health > 0] + [enemy for enemy in board.non_board_enemies if enemy.prevent_win(self)]:
+            return None
+        return Result.WIN
+
+
     def to_frontend(self):
-        result = {} if self.board.check_game_over() is None else {'result': self.board.check_game_over().value}
+        result = self.check_game_over()
+        result = {} if result is None else {'result': result.value}
         return {'game_info': self.game_info.to_json(), **self.board.to_frontend(self), 'dice': self.dice.to_json(), 'rolls': self.rolls, 'availableSpells': available_spells(self), **result}
 
     def write(self):

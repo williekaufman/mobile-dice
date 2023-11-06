@@ -3,13 +3,13 @@ import './Board.css';
 import { fetchWrapper, squares_in_order } from './Helpers';
 import { color } from './GamePage';
 
-function backgroundImageUrl(unit, terrain, threatened) {
+function backgroundImage(unit, terrain, threatened) {
   if (unit === "enemy") {
     unit = `enemy-${color(0)}`;
   }
-  unit = unit ? `url("../images/${unit}.jpg"),` : "";
-  terrain = `url("../images/${terrain}.jpg")`;
-  threatened = threatened || threatened === 0 ? `url("../images/target-${color(threatened)}.jpg"),` : "";
+  unit = `url("../images/${unit}.jpg") no-repeat center/66%,`;
+  terrain = `url("../images/${terrain}.jpg") no-repeat center/cover`;
+  threatened = threatened || threatened === 0 ? `url("../images/target-${color(threatened)}.jpg") no-repeat center/40%,` : "";
   return `${threatened}${unit}${terrain}`;
 }
 
@@ -56,13 +56,26 @@ function HealthBar({ current, max, block }) {
   );
 };
 
-function Name({ name }) {
+function SquareName({ name }) {
   if (!name) {
     return null;
   }
 
   return (
-    <div className="name">
+    <div className="square-name">
+      {name}
+    </div>
+  );
+};
+
+
+function UnitName({ name }) {
+  if (!name) {
+    return null;
+  }
+
+  return (
+    <div className="unit-name">
       {name}
     </div>
   );
@@ -95,9 +108,10 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
   }
 
   return (
-    <div id={name} className={className} style={{ backgroundImage: backgroundImageUrl(data.unit.type, data.terrain, isThreatened)}} onClick={onClick}>
+    <div id={name} className={className} style={{ background: backgroundImage(data.unit.type, data.terrain, isThreatened)}} onClick={onClick}>
       {data.unit && <HealthBar current={data.unit.current_health} max={data.unit.max_health} block={data.unit.temporary?.block} />}
-      {data.unit && <Name name={data.unit.name} />}
+      {data.unit && <UnitName name={data.unit.name} />}
+      <SquareName name={name} />
     </div>
   )
 }
