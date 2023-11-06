@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import Button from '@mui/material/Button';
+import { useEffect } from 'react';
 import { fetchWrapper } from './Helpers';
 
 export default function LandingPage() {

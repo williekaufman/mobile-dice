@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -35,11 +35,11 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
     return (
         <div>
             <LargeButton
-                style={casting == spell.name ? { backgroundColor: 'red' } : {}}
+                style={casting === spell.name ? { backgroundColor: 'red' } : {}}
                 variant="contained"
                 disabled={!Object.keys(availableSpells).includes(spell.name)}
                 onClick={() => {
-                    if (casting != spell.name) {
+                    if (casting !== spell.name) {
                         setCasting(spell.name)
                     }
                     else {

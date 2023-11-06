@@ -38,6 +38,7 @@ class Dice():
         self.dice = dice or [Die() for _ in range(5)]
 
     def roll(self, locks=[]):
+        print(f'locks are {locks}')
         for i, die in enumerate(self.dice):
             if i not in locks:
                 die.roll()

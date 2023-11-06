@@ -48,18 +48,15 @@ class Enemy():
                 return square
 
     def describe_turn(self, state):
-        move = self.moves[self.move_index]
-        description = move.describe(state, self.location(state), move.memory)
-        move.memory = description[1] if move.memory is None else move.memory
-        return description[0]
+        return self.moves[self.move_index].describe(state, self.location(state))
 
     def resolve_turn(self, state):
         move = self.moves[self.move_index]
-        move.resolve(state, self.location(state), move.memory)
-        move.memory  = None
-        self.transition(self)
+        move.resolve(state, self.location(state))
+        self.transition(self, state)
 
     def take_damage(self, damage):
+        print(f"Taking {damage} damage, current health {self.current_health}")
         self.current_health = max(0, self.current_health - damage)
 
     def heal(self, amount):
@@ -68,22 +65,25 @@ class Enemy():
     def copy(self):
         return Enemy(self.name, self.current_health, self.max_health, self.moves, self.transition, self.move_index)
 
-def next_move(enemy):
+def next_move(enemy, state):
     enemy.move_index = (enemy.move_index + 1) % len(enemy.moves)
 
-def random_move(enemy):
+def random_move(enemy, state):
     enemy.move_index = random.randint(0, len(enemy.moves) - 1)
 
 damage_terrain = moves['damage_terrain']
 transform = moves['transform']
 move = moves['move']
 random_direction = moves['random_direction']
+cross_attack = moves['cross_attack']
+move_then_cross_attack = moves['move_then_cross_attack']
 
 # You need to make a copy if you interact with this! So probably use get_enemy.
 enemies = {
-    'orc': Enemy('orc', 5, 5, [damage_terrain(Terrain.PLAINS, 2), transform(Terrain.FOREST, Terrain.PLAINS)], next_move),
+    'orc': Enemy('orc', 5, 5, [damage_terrain(Terrain.PLAINS, 2), transform(Terrain.FOREST, Terrain.PLAINS)], random_move),
     'goblin': Enemy('goblin', 3, 3, [move(Square('A1'))], random_move),
     'skeleton': Enemy('skeleton', 2, 2, [random_direction()], next_move),
+    'rook man': Enemy('rook man', 7, 7, [cross_attack(), move_then_cross_attack()], next_move),
 }
 
 def get_enemy(name):

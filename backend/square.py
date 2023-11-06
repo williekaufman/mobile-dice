@@ -91,7 +91,13 @@ class Square(Enum):
 
     def adjacent_squares(self):
         return [x for x in (self.direction(direction) for direction in Direction) if x]
+
+    def column(self):
+        return [Square.of_index(i, self.index()[1]) for i in range(6)]
     
+    def row(self):
+        return [Square.of_index(self.index()[0], j) for j in range(6)]
+
     def to_json(self):
         return self.value
     

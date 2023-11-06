@@ -2,6 +2,8 @@ from square import Square
 from terrain import Terrain
 from dice import Resource
 from redis_utils import rget_json
+import random
+from enum import Enum
 
 class Cost():
     def __init__(self, cost):
@@ -25,16 +27,40 @@ class Cost():
     def to_json(self):
         return [{'resource': resource.value, 'amount': amount} for resource, amount in self.cost]
 
+class LimitType(Enum):
+    PER_GAME = 'per_game'
+    PER_TURN = 'per_turn' 
+
+class Limit():
+    def __init__(self, type, limit):
+        self.type = type
+        self.limit = limit
+
+    def can_cast(self, times_cast):
+        if self.type == LimitType.PER_GAME:
+            return times_cast['total'] < self.limit
+        if self.type == LimitType.PER_TURN:
+            return times_cast['turn'] < self.limit
 
 class Spell():
-    def __init__(self, name, description, cost, effect):
+    def __init__(self, name, description, cost, effect, limits=[]):
         self.name = name
         self.description = description
         self.cost = cost
         self.effect = effect
+        self.limits = limits
+
+    def times_cast(self, state):
+        total = 0
+        for v in state.spells_cast.values():
+            total += v.count(self.name)
+        return {'total': total, 'turn': state.spells_cast.get(state.game_info.turn, []).count(self.name)}
+
+    def can_cast(self, state):
+        return all(limit.can_cast(self.times_cast(state)) for limit in self.limits) and self.cost.can_afford(state)
 
     def resolve(self, state, target):
-        if not self.cost.can_afford(state):
+        if not self.can_cast(state):
             return False
         if not self.effect(state, target):
             return False
@@ -48,7 +74,7 @@ class Spell():
         return self.name
 
     def of_json(j):
-        return spells[j]
+        return spell_definitions[j]
 
 
 # An effect is a function that takes a state and a target square, and either returns false if it's invalid, or returns true and modifies the state
@@ -115,6 +141,35 @@ def strike(state, target, dry_run=False):
     board.get(target).unit.take_damage(3 + board.player().strength())
     return True
 
+def gain_strength(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() != target:
+        return False
+    if dry_run:
+        return True
+    board.player().gain_strength(1)
+    return True
+
+def gain_dexterity(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() != target:
+        return False
+    if dry_run:
+        return True
+    board.player().gain_dexterity(1)
+    return True
+
+def overheat(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() != target:
+        return False
+    if dry_run:
+        return True
+    board.player().take_damage(1)
+    board.player().gain_spell_damage(3)
+    board.player().gain_strength(3)
+    return True
+
 heal_spell = Spell(
     'heal',
     'Restore one health',
@@ -152,26 +207,57 @@ strike_spell = Spell(
     Cost([(Resource.ATTACK, 1)]),
     strike)
 
+strength_spell = Spell(
+    'strength',
+    'Gain 1 strength. Castable once per turn.',
+    Cost([]),
+    gain_strength, 
+    [Limit(LimitType.PER_TURN, 1)]
+)
+
+dexterity_spell = Spell(
+    'dexterity',
+    'Gain 1 dexterity. Castable once per turn',
+    Cost([]),
+    gain_dexterity, 
+    [Limit(LimitType.PER_TURN, 1)]
+)
+
+overheat_spell = Spell(
+    'overheat',
+    'Take 1 damage, gain 3 spell damage and 3 strength. Only castable once per game.',
+    Cost([(Resource.MAGIC, 1)]),
+    overheat,
+    [Limit(LimitType.PER_GAME, 1)]
+)
+
+
 spell_definitions = {
     'heal': heal_spell,
     'block': block_spell,
     'fireball': fireball_spell,
     'walk': walk_spell,
     'teleport': teleport_spell,
-    'strike': strike_spell
+    'strike': strike_spell,
+    'strength': strength_spell,
+    'dexterity': dexterity_spell,
+    'overheat': overheat_spell,
 }
 
 # Not super efficient to check all the squares even when it's obviously invalid, but it's not a big deal (yet)
-
-
 def available_spells(state):
     ret = {}
-    spells = rget_json('spells', state.id)
+    spells = n_spells(rget_json('num_spells', game_id=state.game_info.id), seed=state.game_info.seed())
     for spell in spells:
         spell = spell_definitions[spell]
-        if spell.cost.can_afford(state):
+        if spell.can_cast(state):
             squares = [square for square in Square if spell.effect(
                 state, square, dry_run=True)]
             if squares:
                 ret[spell.name] = [square.to_json() for square in squares]
     return ret
+
+def n_spells(n, seed=None):
+    if seed:
+        r = random.Random(seed)
+    return r.sample(list(spell_definitions.keys()), n)

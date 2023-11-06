@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './Board.css';
 import { fetchWrapper, squares_in_order } from './Helpers';
 import { color } from './GamePage';
 
 function backgroundImageUrl(unit, terrain, threatened) {
-  if (unit == "enemy") {
+  if (unit === "enemy") {
     unit = `enemy-${color(0)}`;
   }
   unit = unit ? `url("../images/${unit}.jpg"),` : "";
@@ -56,12 +56,13 @@ export function HealthBar({ current, max, block }) {
   );
 };
 
-function cast(gameId, spell, target, setGame, setCasting) {
+function cast(gameId, spell, target, setGame, setCasting, showErrorToast) {
   fetchWrapper("/cast", { gameId, spell, target }, "POST")
     .then((response) => response.json())
     .then((data) => {
       if (!data.success) {
-        console.log(data['error']);
+        console.log('toast time')
+        showErrorToast(data['error'])
         return;
       }
       setCasting(null);
@@ -69,7 +70,7 @@ function cast(gameId, spell, target, setGame, setCasting) {
     });
 }
 
-function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCasting, availableSpells, hoveredSpell }) {
+function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCasting, availableSpells, hoveredSpell , showErrorToast }) {
   let isThreatened = threatened(name, threatenedSquares);
   let isAvailableTarget = availableTarget(name, availableSpells, casting, hoveredSpell);
   let className = isAvailableTarget ? "square shadow-on" : "square";
@@ -78,7 +79,7 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
     if (!casting || !isAvailableTarget) {
       return;
     }
-    cast(gameId, casting, name, setGame, setCasting);
+    cast(gameId, casting, name, setGame, setCasting, showErrorToast);
   }
 
   return (
@@ -88,9 +89,9 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
   )
 }
 
-function Board({ game, setGame, casting, setCasting, hoveredSpell }) {
+function Board({ game, setGame, casting, setCasting, hoveredSpell , showErrorToast }) {
   let board = game.board;
-  let gameId = game.id;
+  let gameId = game.game_info?.id;
   let availableSpells = game.availableSpells;
 
   if (!board) {
@@ -104,7 +105,7 @@ function Board({ game, setGame, casting, setCasting, hoveredSpell }) {
       {x.map((square) => (
         <div key={square}>
           {square &&
-            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={game.enemyTurn.map((turn) => turn.squares)} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} />
+            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={game.enemyTurn.map((turn) => turn.squares)} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} showErrorToast={showErrorToast}/>
           }
         </div>
       ))}

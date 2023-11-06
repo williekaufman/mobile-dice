@@ -20,8 +20,7 @@ class Board():
         for square in Square:
             self.board[square] = Contents(EmptyUnit(), random_terrain())
         self.set_unit(Square('A1'), Player(10, 10))
-        self.set_unit(Square('F6'), get_enemy('goblin'))
-        self.set_unit(Square('F1'), get_enemy('orc'))
+        self.set_unit(Square('F1'), get_enemy('rook man'))
 
 
     def get(self, square):

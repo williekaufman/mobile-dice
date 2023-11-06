@@ -8,8 +8,8 @@ from redis_utils import redis, rget_json, rset_json, rset, rget, recurse_to_json
 from board import Board
 from square import Square, Direction
 from dice import Dice
-from state import State
-from spells import spell_definitions
+from state import GameInfo, State
+from spells import spell_definitions, n_spells
 from enemy import get_enemy, all_enemies
 import random
 import traceback
@@ -32,6 +32,14 @@ def api_endpoint(func):
     return wrapper
 
 
+def success(data):
+    return jsonify({'success': True, **data})
+
+
+def failure(data):
+    return jsonify({'success': False, **data})
+
+
 def new_game_id():
     return token_hex(16)
 
@@ -41,13 +49,15 @@ def new_game_id():
 def new_game():
     num_spells = request.json.get('numSpells') or 6
     game_id = new_game_id()
-    board = Board()
-    dice = Dice()
-    spells = random.sample(list(spell_definitions.keys()), num_spells)
-    rset_json('spells', spells, game_id)
-    rset_json('board', recurse_to_json(board.to_json()), game_id)
-    rset_json('dice', dice.to_json(), game_id)
-    rset('rolls', 3, game_id)
+    state = State(
+        GameInfo(game_id, 1),
+        Board(),
+        Dice(),
+        3,
+        {}
+    )
+    rset('num_spells', num_spells, game_id)
+    state.write()
     return jsonify({'gameId': game_id})
 
 
@@ -55,10 +65,7 @@ def new_game():
 @api_endpoint
 def get_board():
     game_id = request.args.get('gameId')
-    board = Board.of_json(rget_json('board', game_id))
-    dice = Dice.of_json(rget_json('dice', game_id))
-    rolls = rget_json('rolls', game_id)
-    return State(game_id, board, dice, rolls).to_frontend()
+    return success(State.of_game_id(game_id).to_frontend())
 
 
 @app.route('/roll', methods=['POST'])
@@ -66,69 +73,70 @@ def get_board():
 def roll():
     game_id = request.json.get('gameId')
     locks = request.json.get('locks')
-    rolls = rget_json('rolls', game_id=game_id)
-    dice = Dice.of_json(rget_json('dice', game_id))
-    board = Board.of_json(rget_json('board', game_id))
-    if rolls <= 0:
-        return {'success': False, 'error': 'No rolls left', **State(board, dice, rolls).to_frontend()}
-    rolls -= 1
-    dice.roll(locks)
-    state = State(game_id, board, dice, rolls)
+    state = State.of_game_id(game_id)
+    if state.rolls <= 0:
+        return failure({'error': 'No rolls left', **state.to_frontend()})
+    if state.board.check_game_over() is not None:
+        return failure({'error': 'Game is already over', **state.to_frontend()})
+    state.rolls -= 1
+    print([die.active for die in state.dice.dice])
+    state.dice.roll(locks)
     state.write()
-    return state.to_frontend()
+    return success(state.to_frontend())
 
 
 @app.route('/cast', methods=['POST'])
 @api_endpoint
 def cast():
     game_id = request.json.get('gameId')
+    if not game_id:
+        return {'success': False, 'error': 'No game id'}
     spell = request.json.get('spell')
     target = Square(request.json.get('target'))
-    rolls = rget_json('rolls', game_id=game_id)
-    dice = Dice.of_json(rget_json('dice', game_id))
-    board = Board.of_json(rget_json('board', game_id))
-    state = State(game_id, board, dice, rolls)
-    if board.check_game_over() is not None:
-        return {'success': False, 'error': 'Game is already over', **state.to_frontend()}
+    state = State.of_game_id(game_id)
+    if state.board.check_game_over() is not None:
+        return failure({'error': 'Game is already over', **state.to_frontend()})
     if spell not in spell_definitions:
-        return {'success': False, 'error': 'Unknown spell', **state.to_frontend()}
+        return failure({'error': 'Unknown spell', **state.to_frontend()})
     if not spell_definitions[spell].resolve(state, target):
-        return {'success': False, 'error': 'Failed to cast spell', **state.to_frontend()}
+        return failure({'error': 'Failed to cast spell', **state.to_frontend()})
+    state.add_spell_cast(spell)
     state.write()
-    return state.to_frontend()
+    return success(state.to_frontend())
 
 
 @app.route('/submit', methods=['POST'])
 @api_endpoint
 def submit():
     game_id = request.json.get('gameId')
-    board = Board.of_json(rget_json('board', game_id))
-    dice = Dice.of_json(rget_json('dice', game_id))
-    rolls = rget_json('rolls', game_id)
-    state = State(game_id, board, dice, rolls)
+    state = State.of_game_id(game_id)
+    if state.board.check_game_over() is not None:
+        return failure({'error': 'Game is already over', **state.to_frontend()})
     state.roll_turn()
     state.write()
-    return state.to_frontend()
+    return success(state.to_frontend())
 
 @app.route('/spells', methods=['GET'])
 @api_endpoint
 def all_spells():
     game_id = request.args.get('gameId')
     if not game_id:
-        return {'success': False, 'error': 'No game id'}
-    spells = rget_json('spells', game_id)
-    return {'success': True, 'spells': [spell_definitions[spell].to_frontend() for spell in spells]}
+        return failure({'error': 'No game id'})
+    seed = GameInfo.of_game_id(game_id).seed()
+    num_spells = rget_json('num_spells', game_id)
+    spells = n_spells(num_spells, seed)
+    return success({'spells': [spell_definitions[spell].to_frontend() for spell in spells]})
 
 @app.route('/enemy', methods=['GET'])
 @api_endpoint
 def enemy_info():
     enemy = request.args.get('enemy')
-    return {'success': True, 'enemy': get_enemy(enemy).describe()}
+    return success({'enemy': get_enemy(enemy).to_frontend()})
 
 @app.route('/enemy/all', methods=['GET'])
 @api_endpoint
 def all_enemies():
-    return {'success': True, 'enemies': [enemy.describe() for enemy in all_enemies()]}
+    return success({'enemies': [enemy.describe() for enemy in all_enemies()]})
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5005, debug=True)

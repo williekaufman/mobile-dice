@@ -3,6 +3,7 @@ from enum import Enum
 class UnitType(Enum):
     PLAYER = 'player'
     ENEMY = 'enemy'
+    CITY = 'city'
     EMPTY = 'empty'
 
 class EmptyUnit():

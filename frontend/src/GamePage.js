@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchWrapper } from './Helpers';
 import Board from './Board';
 import Dice from './Dice';
 import Spells from './Spells';
 import Intent from './Intent';
+import Toast from './Toast';
 import PlayerInfo from './PlayerInfo';
 import './Styles.css';
 import Button from '@mui/material/Button';
@@ -40,39 +41,50 @@ function Result({ result }) {
 
 export default function GamePage() {
     let { gameId } = useParams();
-    const [game, setGame] = useState(null);
-    const [spells, setSpells] = useState([]);
-    const [casting, setCasting] = useState(null);
-    const [hoveredSpell, setHoveredSpell] = useState(null);
+    let [game, setGame] = useState(null);
+    let [spells, setSpells] = useState([]);
+    let [casting, setCasting] = useState(null);
+    let [hoveredSpell, setHoveredSpell] = useState(null);
     let [locks, setLocks] = useState([false, false, false, false, false]);
+    let [error, setError] = useState(null);
 
-    function updateGame() {
+    const showErrorToast = (message) => {
+        console.log("Setting error");
+        setError(message);
+
+        setTimeout(() => {
+            setError(null);
+        }, 5000);
+    };
+
+    const updateGame = useCallback(() => {
         fetchWrapper("/state", { gameId }, "GET")
             .then((response) => response.json())
             .then((data) => {
                 if (!data.success) {
-                    console.log(data['error']);
+                    showErrorToast(data['error']);
                     return;
                 }
                 setGame(data);
             });
-    }
-
-    useEffect(() => {
-        updateGame();
     }, [gameId]);
 
-    useEffect(() => {
+    const getSpells = useCallback(() => {
         fetchWrapper("/spells", { gameId }, "GET")
             .then((response) => response.json())
             .then((data) => {
                 if (!data.success) {
-                    console.log(data['error']);
+                    showErrorToast(data['error']);
                     return;
                 }
                 setSpells(data.spells);
             });
-    }, [])
+    }, [gameId]);
+
+    useEffect(() => {
+        updateGame();
+        getSpells();
+    }, [gameId, updateGame, getSpells]);
 
     function locksArg() {
         return locks.map((lock, i) => lock ? i : null).filter((lock) => lock !== null);
@@ -83,7 +95,7 @@ export default function GamePage() {
             .then((response) => response.json())
             .then((data) => {
                 if (!data.success) {
-                    console.log(data['error']);
+                    showErrorToast(data['error']);
                     return;
                 }
                 setGame(data);
@@ -95,11 +107,12 @@ export default function GamePage() {
             .then((response) => response.json())
             .then((data) => {
                 if (!data.success) {
-                    console.log(data['error']);
+                    showErrorToast(data['error']);
                     return;
                 }
                 setLocks([false, false, false, false, false]);
                 setGame(data);
+                getSpells();
             });
     }
 
@@ -112,9 +125,15 @@ export default function GamePage() {
     return (
         <div>
             <div className="vertical-container">
-                <Result result={game.result} />
                 <div className="horizontal-container">
                     <div className="vertical-container" style={{ marginTop: '1vh' }}>
+                        <Toast message={error} onClose={() => setError(null)} />
+                        <div className="horizontal-container" style={{ marginBottom: '10px' }}>
+                            <Result result={game.result} />
+                            <Button variant="contained" style={{ backgroundColor: 'blue' }} onClick={newGame}>
+                                New Game
+                            </Button>
+                        </div>
                         <div className="horizontal-container">
                             <Button style={{ color: 'white', backgroundColor: canRoll ? 'blue' : 'red' }} variant="contained" onClick={Roll} disabled={!canRoll} >
                                 Roll {game ? `(${game.rolls})` : null}
@@ -128,14 +147,10 @@ export default function GamePage() {
                         <PlayerInfo game={game} />
                         <Intent game={game} />
                         <Spells game={game} spells={spells} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} setHoveredSpell={setHoveredSpell} />
-
                     </div>
-                    <Board game={game} setGame={setGame} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} />
+                    <Board game={game} setGame={setGame} casting={casting} setCasting={setCasting} hoveredSpell={hoveredSpell} showErrorToast={showErrorToast} />
                 </div>
             </div>
-            <Button variant="contained" onClick={newGame}>
-                New Game
-            </Button>
         </div>
     )
 }
