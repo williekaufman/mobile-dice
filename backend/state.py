@@ -50,7 +50,8 @@ class State():
         self.rolls = 3
         self.dice.reset()
         self.board.enemy_turn(self)
-        self.board.terrain_turn()
+        self.board.terrain_turn(self)
+        self.board.city_turn(self)
         self.board.player_turn(self)
         self.board.cleanup_dead_enemies()
         self.dice.roll()

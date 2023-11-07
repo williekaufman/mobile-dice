@@ -1,6 +1,7 @@
 from board import Square
 import random
 from square import Direction
+from terrain import Terrain
 
 class MoveSummary():
     def __init__(self, squares, description):
@@ -49,7 +50,7 @@ def damage_terrain(terrain, n):
     return Move(f"Deal {n} damage to units on {terrain.value}", lambda state, location: describe_damage_terrain(state, terrain, n), lambda state, location: resolve_damage_terrain(state, terrain, n))
 
 def describe_damage_all(state, n):
-    return MoveSummary([], f"Deal {n} damage to all characters")
+    return MoveSummary(list(Square), f"Deal {n} damage to all characters")
 
 def resolve_damage_all(state, n):
     for square in Square:

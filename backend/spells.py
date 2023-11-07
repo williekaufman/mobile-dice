@@ -127,6 +127,14 @@ def walk(state, target, dry_run=False):
     board.move(board.player_location(), target)
     return True
 
+def road(state, target, dry_run=False):
+    board = state.board
+    if target not in board.player_location().adjacent_squares() or not board.get(target).unit.empty() or not board.get(target).terrain == Terrain.ROAD:
+        return False
+    if dry_run:
+        return True
+    board.move(board.player_location(), target)
+    return True
 
 def teleport(state, target, dry_run=False):
     board = state.board
@@ -184,6 +192,34 @@ def innervate(state, target, dry_run=False):
         die.live = True
     return True
 
+def ray_of_fire(state, target, dry_run=False):
+    board = state.board
+    if board.player_location().distance(target) != 1:
+        return False
+    if dry_run:
+        return True
+    damage = 1 + board.player().spell_damage()
+    # Ray from player through target
+    direction = board.player_location().direction_to(target)
+    square = board.player_location()
+    while square.direction(direction) is not None:
+        square = square.direction(direction)
+        contents = board.get(square)
+        contents.unit.take_damage(damage)
+    return True
+
+def cataclysm(state, target, dry_run=False):
+    board = state.board
+    if board.player_location() == target:
+        return False
+    if dry_run:
+        return False
+    damage = 3 + board.player().spell_damage() + board.player().strength()
+    for square, contents in board.board.items():
+        if square != target:
+            contents.unit.take_damage(3)
+    return True
+
 heal_spell = Spell(
     'heal',
     'Restore one health',
@@ -203,11 +239,33 @@ fireball_spell = Spell(
     Cost([(Resource.MAGIC, 1)]),
     fireball)
 
+ray_of_fire_spell = Spell(
+    'ray of fire',
+    'Deals 1 damage in a line',
+    Cost([(Resource.MAGIC, 1)]),
+    ray_of_fire
+)
+
+cataclysm_spell = Spell(
+    'cataclysm',
+    'Deals 3 damage to ALL other characters. Scales with strength and spell damage. Castable once per game.',
+    Cost([(Resource.MAGIC, 1), (Resource.ATTACK, 1)]),
+    cataclysm,
+    [Limit(LimitType.PER_GAME, 1)]
+)
+
 walk_spell = Spell(
     'walk',
     'Take a step to an adjacent square',
     Cost([(Resource.MOVE, 1)]),
     walk)
+
+road_spell = Spell(
+    'road',
+    'Take a step to an adjacent road',
+    Cost([]),
+    road
+)
 
 teleport_spell = Spell(
     'teleport',
@@ -257,7 +315,10 @@ spell_definitions = {
     'heal': heal_spell,
     'block': block_spell,
     'fireball': fireball_spell,
+    'ray of fire': ray_of_fire_spell,
+    'cataclysm': cataclysm_spell,
     'walk': walk_spell,
+    'road': road_spell,
     'teleport': teleport_spell,
     'strike': strike_spell,
     'strength': strength_spell,

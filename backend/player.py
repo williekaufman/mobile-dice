@@ -76,6 +76,9 @@ class Player():
         else:
             self.temporary.block -= damage
 
+    def lose_life(self, amount):
+        self.current_health = max(0, self.current_health - amount)
+
     def heal(self, amount):
         self.current_health = min(
             self.max_health, self.current_health + amount)

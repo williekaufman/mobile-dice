@@ -9,10 +9,14 @@ function Cost({ cost }) {
         return null;
     }
 
+    cost = cost.map((cost) =>
+        `${cost.amount || ""} ${cost.resource}`
+    ).join(", ")
+
     return (
         <div className="cost">
             <Typography variant="body1">
-                Cost: {cost.amount} {cost.resource}
+                Cost: {cost}
             </Typography>
         </div>
     )
@@ -32,7 +36,7 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
         width: '30vw',
     });
 
-    spell.cost = spell.cost.length === 0 ? [{"amount": null, "resource": "Free"}] : spell.cost;
+    spell.cost = spell.cost.length === 0 ? [{ "amount": null, "resource": "Free" }] : spell.cost;
 
     return (
         <div>
@@ -57,9 +61,7 @@ function Spell({ spell, availableSpells, casting, setCasting, setHoveredSpell })
                 <Box>
                     <Typography variant="h5" component="h2">
                         {spell.name}
-                        {spell.cost.map((cost, index) => (
-                            <Cost key={index} cost={cost} />
-                        ))}
+                        <Cost cost={spell.cost} />
                     </Typography>
                     <Typography variant="body1">
                         {spell.description}

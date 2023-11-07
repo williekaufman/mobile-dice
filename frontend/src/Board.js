@@ -3,21 +3,30 @@ import './Board.css';
 import { fetchWrapper, squares_in_order } from './Helpers';
 import { color } from './GamePage';
 
-function backgroundImage(unit, terrain, threatened) {
-  if (unit === "enemy") {
-    unit = `enemy-${color(0)}`;
+export function highlight(square) {
+  document.getElementById(square).classList.add("highlight");
+}
+
+export function unhighlightAll() {
+  let squares = document.getElementsByClassName("highlight");
+  for (let square of squares) {
+    square.classList.remove("highlight");
   }
+}
+
+function backgroundImage(unit, terrain, threatened) {
   unit = `url("../images/${unit}.jpg") no-repeat center/66%,`;
   terrain = `url("../images/${terrain}.jpg") no-repeat center/cover`;
   threatened = threatened || threatened === 0 ? `url("../images/target-${color(threatened)}.jpg") no-repeat center/40%,` : "";
   return `${threatened}${unit}${terrain}`;
 }
 
-function threatened(square, threatenedSquares) {
-  for (let i = 0; i < threatenedSquares.length; i++) {
-    if (threatenedSquares[i].includes(square)) {
-      return i;
-    }
+function threatened(square, threatenedSquares, activeEnemy) {
+  if (activeEnemy === null) {
+    return false;
+  }
+  if (threatenedSquares[activeEnemy].includes(square)) {
+    return activeEnemy;
   }
   return false;
 }
@@ -95,8 +104,8 @@ function cast(gameId, spell, target, setGame, setCasting, showErrorToast) {
     });
 }
 
-function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCasting, availableSpells, hoveredSpell , showErrorToast }) {
-  let isThreatened = threatened(name, threatenedSquares);
+function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCasting, availableSpells, hoveredSpell, showErrorToast , activeEnemy }) { 
+  let isThreatened = threatened(name, threatenedSquares, activeEnemy);
   let isAvailableTarget = availableTarget(name, availableSpells, casting, hoveredSpell);
   let className = isAvailableTarget ? "square shadow-on" : "square";
 
@@ -108,7 +117,7 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
   }
 
   return (
-    <div id={name} className={className} style={{ background: backgroundImage(data.unit.type, data.terrain, isThreatened)}} onClick={onClick}>
+    <div id={name} className={className} style={{ background: backgroundImage(data.unit.type, data.terrain, isThreatened) }} onClick={onClick}>
       {data.unit && <HealthBar current={data.unit.current_health} max={data.unit.max_health} block={data.unit.temporary?.block} />}
       {data.unit && <UnitName name={data.unit.name} />}
       <SquareName name={name} />
@@ -116,7 +125,7 @@ function Square({ gameId, name, data, threatenedSquares, setGame, casting, setCa
   )
 }
 
-function Board({ game, setGame, casting, setCasting, hoveredSpell , showErrorToast }) {
+function Board({ game, setGame, casting, setCasting, hoveredSpell, showErrorToast , activeEnemy , setActiveEnemy }) {
   let board = game.board.board;
   let gameId = game.game_info?.id;
   let availableSpells = game.availableSpells;
@@ -134,7 +143,7 @@ function Board({ game, setGame, casting, setCasting, hoveredSpell , showErrorToa
       {x.map((square) => (
         <div key={square}>
           {square &&
-            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={threatenedSquares} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} showErrorToast={showErrorToast}/>
+            <Square gameId={gameId} name={square} setGame={setGame} data={board[square]} threatenedSquares={threatenedSquares} activeEnemy={activeEnemy} setActiveEnemy={setActiveEnemy} casting={casting} setCasting={setCasting} availableSpells={availableSpells} hoveredSpell={hoveredSpell} showErrorToast={showErrorToast} />
           }
         </div>
       ))}

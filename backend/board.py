@@ -5,18 +5,19 @@ from enemy import Enemy, get_enemy
 from player import Player
 from terrain import Terrain, random_terrain
 from helpers import unit_of_json
+from boards import board_configs, make_board
+import random
+
 
 class Board():
-    def __init__(self, initialize_board=True):
+    def __init__(self, initialize_board=True, name=None):
         self.board = {}
         self.non_board_enemies = []
         if not initialize_board:
             return
-        for square in Square:
-            self.board[square] = Contents(EmptyUnit(), random_terrain())
-        self.set_unit(Square('A1'), Player(10, 10))
-        self.set_unit(Square('F1'), get_enemy('rook man'))
-        self.non_board_enemies = [get_enemy('trap room')]
+        config = board_configs.get(name) or random.choice(
+            list(board_configs.values()))
+        self.board, self.non_board_enemies = make_board(config)
 
     def get(self, square):
         return self.board[square]
@@ -32,7 +33,7 @@ class Board():
 
     def cleanup_dead_enemies(self):
         for square, contents in self.board.items():
-            if contents.unit.type == UnitType.ENEMY and contents.unit.current_health <= 0:
+            if contents.unit.type in [UnitType.ENEMY, UnitType.CITY] and contents.unit.current_health <= 0:
                 self.set_unit(square, EmptyUnit())
 
     def player_location(self):
@@ -49,6 +50,9 @@ class Board():
     def enemies(self, include_non_board_enemies=True):
         return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.ENEMY] + (self.non_board_enemies if include_non_board_enemies else [])
 
+    def cities(self):
+        return [contents.unit for contents in self.board.values() if contents.unit.type == UnitType.CITY]
+
     def move(self, square, target):
         if not target or self.get(target).unit.type != UnitType.EMPTY:
             return False
@@ -58,13 +62,18 @@ class Board():
     def move_direction(self, square, direction):
         return self.move(square, square.direction(direction))
 
-    def terrain_turn(self):
+    def terrain_turn(self, state):
+        # Terrain turns happen all at once by terrain, so things like spreading wildfire doesn't chain
+        for terrain in Terrain:
+            terrain.take_turn(state)
+
+    def city_turn(self, state):
         for square, contents in self.board.items():
-            if contents.terrain == Terrain.POISON or contents.terrain == Terrain.BURNT_FOREST:
-                self.board[square].unit.take_damage(1)
+            if contents.unit.type == UnitType.CITY:
+                contents.unit.resolve_turn(state)
 
     def describe_enemy_turn(self, state):
-        return {enemy.name: enemy.describe_turn(state).to_json() for enemy in self.enemies()}
+        return [{'name': enemy.name, **enemy.describe_turn(state)} for enemy in self.enemies()]
 
     def enemy_turn(self, state):
         for enemy in self.enemies():
@@ -77,7 +86,8 @@ class Board():
         b = Board(False)
         b.board = {Square(k): Contents(
             unit_of_json(v['unit']), Terrain(v['terrain'])) for k, v in j['board'].items()}
-        b.non_board_enemies = [unit_of_json(enemy) for enemy in j['non_board_enemies']]
+        b.non_board_enemies = [unit_of_json(enemy)
+                               for enemy in j['non_board_enemies']]
         return b
 
     def to_frontend(self, state):

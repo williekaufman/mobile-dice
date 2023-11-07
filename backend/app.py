@@ -11,6 +11,7 @@ from dice import Dice
 from state import GameInfo, State
 from spells import spell_definitions, n_spells
 from enemy import get_enemy, all_enemies
+from city import get_city, all_cities
 import random
 import traceback
 from functools import wraps
@@ -48,10 +49,11 @@ def new_game_id():
 @api_endpoint
 def new_game():
     num_spells = request.json.get('numSpells') or 6
+    board = request.json.get('board')
     game_id = new_game_id()
     state = State(
         GameInfo(game_id, 1),
-        Board(),
+        Board(name=board),
         Dice(),
         3,
         {}
@@ -139,8 +141,19 @@ def enemy_info():
 
 @app.route('/enemy/all', methods=['GET'])
 @api_endpoint
-def all_enemies():
+def all_enemy_info():
     return success({'enemies': [enemy.describe() for enemy in all_enemies()]})
+
+@app.route('/city', methods=['GET'])
+@api_endpoint
+def city_info():
+    return success({'city': get_enemy('city').to_frontend()})
+
+@app.route('/city/all', methods=['GET'])
+@api_endpoint
+def all_city_info():
+    print(all_cities()[0].describe())
+    return success({'cities': [city.describe() for city in all_cities()]})
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5005, debug=True)

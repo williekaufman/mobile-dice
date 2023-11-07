@@ -21,8 +21,7 @@
   background-position: center, center, center;
   background-repeat: no-repeat;
   color: white;
-  outline: 4px solid black;
-  box-sizing: border-box;
+  box-shadow: 0 0 0 4px black;
   position: relative;
 }
 
@@ -43,6 +42,20 @@
 .square.shadow-on::after {
   opacity: 1; 
 }
+
+.square.highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 5px yellow;
+}
+
+
 
 .health-bar-container {
   width: 100%;

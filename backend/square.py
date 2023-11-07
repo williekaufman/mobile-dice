@@ -88,10 +88,18 @@ class Square(Enum):
             return self.offset(0, 1)
         else:
             return None
+        
+    def direction_to(self, other):
+        if self == other:
+            return None
+        for direction in Direction:
+            if self.direction(direction) == other:
+                return direction
+        return None
 
     def adjacent_squares(self):
         return [x for x in (self.direction(direction) for direction in Direction) if x]
-
+        
     def column(self):
         return [Square.of_index(i, self.index()[1]) for i in range(6)]
     
@@ -102,4 +110,4 @@ class Square(Enum):
         return self.value
     
     def of_json(j):
-        return Square(j)
+        return Square(j) 

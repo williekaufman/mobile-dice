@@ -19,6 +19,9 @@ class EmptyUnit():
     def take_damage(self, n):
         pass
 
+    def lose_life(self, n):
+        pass
+    
     def heal(self, n):
         pass
 
